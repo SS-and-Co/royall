@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Royal Groceries - Premium online grocery shopping with free delivery, fresh produce, and best prices in India.">
+    <meta name="theme-color" content="#0A192F">
+    <title>Royal — Premium Groceries</title>
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- Background Ambient -->
+    <div class="bg-particles" aria-hidden="true"></div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     AUTH OVERLAY
+     ═══════════════════════════════════════════════════════ -->
+    <div id="authOverlay" class="overlay">
+        <div class="auth-box">
+            <span class="auth-crown">👑</span>
+            <div class="auth-logo">Royal</div>
+            <p class="auth-subtitle" id="authSubtitle">Enter your email or phone to continue</p>
+
+            <!-- Login Form -->
+            <div id="loginForm">
+                <input type="text" id="authInput" class="auth-input" placeholder="Email address or phone number"
+                    autocomplete="email" spellcheck="false">
+
+                <!-- Captcha (hidden initially) -->
+                <div id="captchaSection" class="captcha-box hidden">
+                    <div class="captcha-label"><i class="fas fa-shield-halved"></i> Human Verification</div>
+                    <div class="captcha-puzzle" id="captchaPuzzle">? + ? = ?</div>
+                    <input type="number" id="captchaInput" class="auth-input" placeholder="Your answer"
+                        style="margin-bottom:0">
+                </div>
+
+                <button id="authBtn" class="btn btn-primary" onclick="handleAuthContinue()">
+                    <i class="fas fa-arrow-right"></i> Continue
+                </button>
+            </div>
+
+            <!-- OTP Form -->
+            <div id="otpForm" class="hidden">
+                <p style="color:var(--text-secondary);margin-bottom:8px">
+                    Enter the 6-digit OTP sent to you
+                </p>
+                <div class="otp-timer">Expires in <span id="otpTimer">10:00</span></div>
+                <div class="otp-inputs">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                    <input type="text" class="otp-digit" maxlength="1" inputmode="numeric" pattern="[0-9]">
+                </div>
+                <button class="btn btn-primary" onclick="verifyOtp()">
+                    <i class="fas fa-check-circle"></i> Verify OTP
+                </button>
+                <button class="btn-ghost" onclick="backToLogin()">
+                    <i class="fas fa-arrow-left"></i> Change email/phone
+                </button>
+            </div>
+
+            <p id="authError" class="error-msg"></p>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     MAIN APPLICATION
+     ═══════════════════════════════════════════════════════ -->
+    <div id="app" class="hidden">
+
+        <!-- Navbar -->
+        <nav class="navbar" id="navbar">
+            <a href="#" class="nav-logo" onclick="location.reload()">
+                <span>👑</span> Royal
+            </a>
+
+            <div class="search-container">
+                <div class="search-wrapper">
+                    <input type="text" id="searchInput" placeholder="Search for groceries..." autocomplete="off"
+                        spellcheck="false">
+                    <button onclick="handleSearch()" aria-label="Search">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="nav-actions">
+                <a href="#" id="adminLink" class="hidden" onclick="openAdmin(); return false;">
+                    <i class="fas fa-gauge-high"></i> <span class="nav-text">Admin</span>
+                </a>
+                <button onclick="openCart()">
+                    <i class="fas fa-shopping-cart"></i> <span class="nav-text">Cart</span>
+                    <span class="cart-badge" id="cartBadge" style="display:none">0</span>
+                </button>
+                <button onclick="logout()">
+                    <i class="fas fa-sign-out-alt"></i> <span class="nav-text">Logout</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Hero / Banner -->
+        <section class="hero" id="heroSection">
+            <div class="hero-content" id="heroContent">
+                <h1>Enjoy shopping with ROYAL</h1>
+                <p>Premium groceries delivered to your doorstep. Quality you can trust.</p>
+            </div>
+        </section>
+
+        <!-- Recommendations -->
+        <section class="section hidden" id="recommendSection">
+            <h2 class="section-title">Recommended For You</h2>
+            <div class="products-grid" id="recommendGrid"></div>
+        </section>
+
+        <!-- Products -->
+        <section class="section">
+            <h2 class="section-title" id="productsSectionTitle">Our Selection</h2>
+            <div class="products-grid" id="productsGrid"></div>
+            <div id="noResults" class="no-results hidden">
+                <i class="fas fa-search"></i>
+                <h3>Not available</h3>
+                <p>Sorry for the inconvenience.</p>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>👑 Royal Groceries &copy; 2026. Premium quality, always.</p>
+            <p style="margin-top:6px">
+                <a href="mailto:siddharths1003@gmail.com">Contact Admin</a> &bull;
+                All prices in Indian Rupees (₹)
+            </p>
+        </footer>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     CART MODAL
+     ═══════════════════════════════════════════════════════ -->
+    <div id="cartOverlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-shopping-cart"></i> Your Cart</h2>
+                <button class="modal-close" onclick="closeCart()">&times;</button>
+            </div>
+            <div id="cartItems"></div>
+            <div id="cartTotal"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     CHECKOUT MODAL
+     ═══════════════════════════════════════════════════════ -->
+    <div id="checkoutOverlay" class="modal-overlay hidden">
+        <div class="modal">
+            <div class="modal-header">
+                <h2><i class="fas fa-credit-card"></i> Checkout</h2>
+                <button class="modal-close" onclick="closeCheckout()">&times;</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Delivery Method</label>
+                <select id="deliveryMethod" class="form-select" onchange="toggleDeliveryField()">
+                    <option value="home">🚚 Home Delivery</option>
+                    <option value="shop">🏪 Collect from Shop</option>
+                </select>
+            </div>
+            <div class="form-group" id="addressGroup">
+                <label class="form-label">Delivery Address</label>
+                <textarea id="deliveryAddress" class="form-textarea"
+                    placeholder="Enter your full address..."></textarea>
+                <p class="form-hint">Free delivery within 15km. ₹100/km beyond that.</p>
+            </div>
+            <button class="btn btn-primary" onclick="placeOrder()">
+                <i class="fas fa-check"></i> Place Order
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     ADMIN MODAL
+     ═══════════════════════════════════════════════════════ -->
+    <div id="adminOverlay" class="modal-overlay hidden">
+        <div class="modal" style="max-width:750px">
+            <div class="modal-header">
+                <h2><i class="fas fa-gauge-high"></i> Admin Dashboard</h2>
+                <button class="modal-close" onclick="closeAdmin()">&times;</button>
+            </div>
+
+            <!-- Banner Management -->
+            <div class="admin-section">
+                <h3><i class="fas fa-image"></i> Offer / Discount Banner</h3>
+                <p style="color:var(--text-muted);font-size:0.85rem;margin-bottom:12px">
+                    Upload a promotional image (recommended: 1920×400px) or clear to show default text.
+                </p>
+                <input type="file" id="adminBannerFile" accept="image/*" class="admin-input" style="padding:8px">
+                <div style="display:flex;gap:10px;margin-top:4px">
+                    <button class="btn btn-primary btn-sm" onclick="adminUploadBanner()">
+                        <i class="fas fa-upload"></i> Upload
+                    </button>
+                    <button class="btn btn-secondary btn-sm" onclick="adminClearBanner()">
+                        <i class="fas fa-eraser"></i> Clear (Default)
+                    </button>
+                </div>
+            </div>
+
+            <!-- Product Management -->
+            <div class="admin-section">
+                <h3><i class="fas fa-box"></i> Add / Edit Product</h3>
+                <input type="text" id="adminProdName" class="admin-input" placeholder="Product Name">
+                <input type="number" id="adminProdPrice" class="admin-input" placeholder="Price (₹)">
+                <input type="text" id="adminProdImg" class="admin-input"
+                    placeholder="Image URL (optional — leave blank for default)">
+                <button class="btn btn-primary btn-sm" onclick="adminSaveProduct()">
+                    <i class="fas fa-save"></i> Save Product
+                </button>
+            </div>
+
+            <!-- Products List -->
+            <div class="admin-section">
+                <h3><i class="fas fa-list"></i> Available Products</h3>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Price</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminProductsList"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════════════════════════
+     AI CHAT ASSISTANT
+     ═══════════════════════════════════════════════════════ -->
+    <div id="aiChatContainer" class="ai-chat-container hidden">
+        <div class="ai-chat">
+            <div class="chat-header">
+                <h3><span class="status-dot"></span> Royal AI Assistant</h3>
+                <button onclick="toggleChat()" aria-label="Close chat">
+                    <i class="fas fa-minus"></i>
+                </button>
+            </div>
+            <div class="chat-body" id="chatBody">
+                <div class="chat-msg bot">
+                    Hello! 👋 I'm your Royal AI Assistant. Ask me about products, prices, delivery, or anything else!
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="chatMsgInput" placeholder="Ask me anything..." onkeypress="handleChatKey(event)"
+                    autocomplete="off">
+                <button onclick="sendChat()" aria-label="Send message">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <button id="chatFab" class="chat-fab" onclick="toggleChat()" aria-label="Open AI Assistant">
+        <i class="fas fa-robot"></i>
+        <span class="badge"></span>
+    </button>
+
+    <!-- Scripts -->
+    <script src="scripts/app.js"></script>
+</body>
+
+</html>
